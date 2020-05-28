@@ -110,6 +110,7 @@ var table = {
                     clickToSelect: options.clickToSelect,				// 是否启用点击选中行
                     singleSelect: options.singleSelect,                 // 是否单选checkbox
                     mobileResponsive: options.mobileResponsive,         // 是否支持移动端适配
+                    cardView: options.cardView,                         // 是否启用显示卡片视图
                     detailView: options.detailView,                     // 是否启用显示细节视图
                     onClickRow: options.onClickRow,                     // 点击某行触发的事件
                     onDblClickRow: options.onDblClickRow,               // 双击某行触发的事件
@@ -289,7 +290,7 @@ var table = {
 					_value = _value.replace(/\'/g,"&apos;");
 					_value = _value.replace(/\"/g,"&quot;");
 					var actions = [];
-					actions.push($.common.sprintf('<input id="tooltip-show" style="opacity: 0;position: absolute;z-index:-1" type="text" value="%s"/>', _value));
+					actions.push($.common.sprintf('<input style="opacity: 0;position: absolute;z-index:-1" type="text" value="%s"/>', _value));
                 	actions.push($.common.sprintf('<a href="###" class="tooltip-show" data-toggle="tooltip" data-target="%s" title="%s">%s</a>', _target, _value, _text));
 					return actions.join('');
 				} else {
@@ -446,13 +447,13 @@ var table = {
             // 查询表格指定列值
             selectColumns: function(column) {
             	var rows = $.map($("#" + table.options.id).bootstrapTable('getSelections'), function (row) {
-        	        return row[column];
+        	        return $.common.getItemField(row, column);
         	    });
             	if ($.common.isNotEmpty(table.options.rememberSelected) && table.options.rememberSelected) {
             		var selectedRows = table.rememberSelecteds[table.options.id];
             		if($.common.isNotEmpty(selectedRows)) {
 	            		rows = $.map(table.rememberSelecteds[table.options.id], function (row) {
-	                        return row[column];
+	                        return $.common.getItemField(row, column);
 	                    });
             		}
             	}
@@ -464,7 +465,7 @@ var table = {
             	var rowIds;
             	if ($.isArray(rows)) {
             	    rowIds = $.map(rows, function(row) {
-            	        return row[column];
+            	        return $.common.getItemField(row, column);
             	    });
             	} else {
             	    rowIds = [rows[column]];
@@ -474,13 +475,13 @@ var table = {
             // 查询表格首列值
             selectFirstColumns: function() {
             	var rows = $.map($("#" + table.options.id).bootstrapTable('getSelections'), function (row) {
-        	        return row[table.options.columns[1].field];
+        	        return $.common.getItemField(row, table.options.columns[1].field);
         	    });
             	if ($.common.isNotEmpty(table.options.rememberSelected) && table.options.rememberSelected) {
             		var selectedRows = table.rememberSelecteds[table.options.id];
             		if($.common.isNotEmpty(selectedRows)) {
             			rows = $.map(selectedRows, function (row) {
-                            return row[table.options.columns[1].field];
+                            return $.common.getItemField(row, table.options.columns[1].field);
                         });
             		}
             	}
@@ -576,7 +577,7 @@ var table = {
             // 查询表格树指定列值
             selectColumns: function(column) {
             	var rows = $.map($.bttTable.bootstrapTreeTable('getSelections'), function (row) {
-        	        return row[column];
+        	        return $.common.getItemField(row, column);
         	    });
             	return $.common.uniqueFn(rows);
             },
@@ -1460,6 +1461,18 @@ var table = {
                     return arg;
                 });
                 return flag ? str : '';
+            },
+            // 获取节点数据，支持多层级访问
+            getItemField: function (item, field) {
+                var value = item;
+                if (typeof field !== 'string' || item.hasOwnProperty(field)) {
+                    return item[field];
+                }
+                var props = field.split('.');
+                for (var p in props) {
+                    value = value && value[props[p]];
+                }
+                return value;
             },
             // 指定随机数返回
             random: function (min, max) {
